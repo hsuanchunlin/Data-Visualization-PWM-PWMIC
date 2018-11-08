@@ -15,9 +15,9 @@ ggplot2
 File list
 =========
 
-Source code in R: Usage\_of \_Heatmap\_bubble.R 
-HiTS-Kin dataset: HTSKIN\_PWMIC.csv
-HiTS-EQ dataset: HTSEQ\_PWMIC.csv \#
+Source code in R: Usage\_of \_Heatmap\_bubble.R  
+HiTS-Kin dataset: HTSKIN\_PWMIC.csv  
+HiTS-EQ dataset: HTSEQ\_PWMIC.csv  
 
 Aquire ggplot2
 
