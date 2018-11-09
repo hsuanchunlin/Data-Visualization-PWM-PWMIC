@@ -1,0 +1,162 @@
+---
+title: "PWM-readme"
+author: "Hsuan-Chun Lin"
+date: "November 9, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Position Weight Matrix (PWM) Model
+
+This is the .R script to analysis the position weigh mat.rix linear model for your RNA/DNA HiTS-Kin/EQ catalysis/binding analysis. In PWM model, each position/nucleotide is Independent and identically distributed random variable. In another word, they don't have "interactions." To proceed the PWM analysis for your HiTS-Kin/EQ dataset, please prepare the character table as following format 
+
+```{r echo=FALSE}
+#load the data
+# clean the data storage
+rm(list= ls())
+
+#Define the parameters
+#How many nucleotides in your sequence
+howmany <- 6
+#import the data
+filename = "transpose_table.csv"
+
+#======================================================================================================
+data <- read.csv(filename)   #Read in the data from a csv
+```
+```{r }
+head(data)
+```
+
+##File list
+Please prepare the following files:
+Character table in .csv format: transpose_table.csv
+PWM.R
+
+##Setting parameters
+First we need to define how many random nucleotides in your binding region. For example, if we randomize 6 nucleotides inthe binding region, NNNNNN, we can set this value in PWM.R file to 6.
+
+```{r }
+howmany <- 6
+```
+
+Then we need to set the input file name in the filename part. Here our input .csv file is named "transpose_table.csv."
+
+```{r }
+filename = "transpose_table.csv"
+```
+
+##Data visualization - Bubble Plot
+
+```{r  echo=FALSE}
+data$LNRK <- log(data$RK)
+attach(data)                                #Attach the column headers to the data as variable names
+#Automatic generate the pair
+nucleotides <- c('A','C','G','T')
+combination <- c()
+k <- 1
+for (i in 1:howmany){
+  for(j in 1:4){
+    combination[k] <- paste(nucleotides[j],i,sep = '')
+    k <- k+1
+  }
+}
+
+control <- c('G1','A2','T3','T4','A5','G6','T7')
+#cut the control
+combination <- combination[!(combination %in% control)]
+
+#generate the command
+command.a <- 'lm1 <- lm(LNRK ~'
+for (i in 1:(length(combination)-1)){
+  command.a <- paste(command.a, combination[i], '+')
+}
+
+command.a <- paste(command.a,combination[length(combination)], ')')
+eval(parse(text = command.a))
+    #regress reaction rate on each base-position variable, and 1 interaction term
+
+#Get the coefficient and prepare for data visualization
+coef1 <- coef(lm1)
+coef1 <- coef1[-1]
+coef1[is.na(coef1)] <- 0
+factor1 <- names(coef1)
+coef1 <- as.numeric(coef1)
+loca <- cbind(factor1, coef1)
+
+loc <- control
+lon <- rep(0,length(control))
+locc <- cbind(loc,lon)
+
+locd<- rbind(loca,locc)
+locb <- data.frame(locd)
+
+locb$NT <- substr(locb[,1],1,1)
+
+locb$POS <- (as.numeric(substr(locb[,1],2,2)))
+locb[locb$NT == 'T',3] <- 'U'
+locb <- as.matrix(locb)
+
+#Using bubble chart to visualize the data
+par(mar=c(5,5,2,2))
+colorc <- c("lightpink",rgb(129/255,216/255,208/255),"orange","olivedrab2")
+#rgb(129/255,216/255,208/255)
+seq <- c('A','C','G','U')
+plot(NA,NA ,pch = 21, cex = 5, col = NULL, bg = "green",
+     xlim = c(1,7),
+     ylim = c(-0.5,0.5),
+     xlab = "Position in Leader",
+     ylab = "Linear Coefficient")
+for (i in 1:4)
+{
+  nt <- seq[i]
+  points(locb[locb[,3]== nt ,4],locb[locb[,3]== nt ,2] ,pch = 21, cex = 5, col = NULL, bg = colorc[i])
+  
+}
+
+
+for (i in 1:length(locb[,1]))
+{
+  text(as.numeric(locb[i,4]),as.numeric(locb[i,2]),locb[i,3], col = "black")
+}
+
+# if you need abline for tick
+abline(h=0)
+```
+
+##Prediction and evaluation
+After fitting our model, we used the same data to evaluate our model to see if the PWM model can describe our dataset.
+
+```{r echo=FALSE}
+lc <- predict(lm1, newdata = data)
+lcf <- lm(lc~data$LNRK)
+plot(data$LNRK,lc,
+     cex = 0.5,
+     xlim = c(-2.0,1.0),
+     ylim = c(-2.0,1.0),
+     xlab = expression(
+       italic(
+         paste("ln(",phantom()^r*K[a], ")")
+       )
+     ),
+     ylab = expression(
+       italic(
+         paste("predicted ln(",phantom()^r*K[a], ")")
+       )
+     )
+)
+text(-1.5,0.5,paste("R= ", round(summary(lcf)$r.square,2)))
+detach(data) 
+```
+
+##Summary of the PWM model
+
+The model summary can be shown by the following code:
+
+```{r }
+summary(lcf)
+```
+In this demo, the PWM model only can describe 46% of the HiTS-EQ dataset.
