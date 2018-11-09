@@ -28,8 +28,9 @@ dataset, please prepare the character table as following format
 File list
 ---------
 
-Please prepare the following files: Character table in .csv format:
-transpose\_table.csv PWM.R
+Please prepare the following files:  
+Character table in .csv format: transpose\_table.csv  
+PWM.R  
 
 Setting parameters
 ------------------
